@@ -1,0 +1,123 @@
+<html>
+    <head>
+        <title>
+            vault Horse
+        </title>
+    </head>
+    <body>
+        <table border="1" >
+            <tr>
+                <th>rows</th>
+                <th>columns</th>
+                <th>originX</th>
+                <th>originY</th>
+            </tr>
+            <tr>
+                <td><input type="text" id="m"></td>
+                <td><input type="text" id="n"></td>
+                <td><input type="number" id="x" min="0"></td>
+                <td><input type="number" id="y" min="0"></td>
+            </tr>
+            <tr>
+                <td><input type="submit" id="confirm" onclick="compute()"></td>
+            </tr>
+            <tr>
+                <td id="alltrack"></td>
+            </tr>
+        </table>
+        <script>
+            var m,n,orix,oriy;
+            var result=document.getElementById("alltrack");
+            var direction=new Array([-2,1],[-1,2],[1,2],[2,1],[2,-1],[1,-2],[-1,-2],[-2,-1]);
+            function initalcheckBox()
+            {
+                var checkbox=new Array();
+                m=parseInt(document.getElementById("m").value);
+                n=parseInt(document.getElementById("n").value);
+                orix=parseInt(document.getElementById("x").value);
+                oriy=parseInt(document.getElementById("y").value);
+                if(x>=m||y>=n)
+                {
+                    alert("origin position out of checkbox");
+                    
+                }
+                for(var i=0;i<m;i++){
+                    checkbox[i]=new Array();
+                    for(var j=0;j<n;j++){
+                        checkbox[i][j]=0;
+                    }
+                }
+                return checkbox;
+            }
+            function compute()
+            {
+                result.innerText="";
+                var check=initalcheckBox();
+                var trace=new Array();
+                findpath(check,trace,orix,oriy);
+            }
+            function findpath(check,trace,x,y)
+            {
+                check[x][y]=1;
+                var checknew=new Array();
+                for(var i=0;i<m;i++){
+                    checknew[i]=new Array();
+                    for(var j=0;j<n;j++){
+                        checknew[i][j]=check[i][j];
+                    }
+                }
+                step=new Array(x,y);
+                trace.push(step);
+                for(var i=0;i<8;i++)
+                {
+                    newx=x+direction[i][0];
+                    newy=y+direction[i][1];
+                    if(whetherout(newx,newy)==true){
+                        var tracenew=new Array();
+                        tracenew.push(trace);
+                        if(checknew[newx][newy]==0){
+                            findpath(checknew,tracenew,newx,newy);
+                        }
+                        else{
+                            if(ifend(newx,newy)){
+                                printTrack(tracenew);
+                            }
+                            else{
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+            function ifend(x,y)
+            {
+                if(x==orix&&y==oriy){
+                    return true;
+                }
+                else{
+                    return false;
+                }
+            }
+            function whetherout(x,y)
+            {
+                if(x<0||x>=m){
+                    return false;
+                }
+                if(y<0||y>=n){
+                    return false;
+                }
+                else{
+                    return true;
+                }
+            }
+            function printTrack(trace)
+            {
+                //alert(trace);
+                
+                for(var i=0;i<trace.length;i++){
+                    result.innerText+="("+trace[i][0]+","+trace[i][1]+")\r";
+                }
+            }
+        </script>
+    </body>
+</html>
