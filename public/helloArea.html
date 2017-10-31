@@ -1,0 +1,253 @@
+<html>
+    <head>
+        <title>this is my name</title>
+    </head>
+    <body>
+        <p>
+            Choose your file:<input type="file" id="fileinput" >
+        </p>
+        <p>
+            Choose pen color:<input type="text" id="pencolor" value="#000000">
+            Enter pen width:<input type="number" id="penwidth" value="1">
+            
+        </p>
+        <p>请选择变换类型
+        <select id="font">
+            <option value="0">显示并计算面积</option>
+            <option value="1">反解并计算面积</option> 
+        </select>
+        <input type="submit" id="btnconfirm"  value="确定"  onclick="drawyourname()">
+        </p>
+        <div id="test"></div>
+    </body>
+    <script>
+        var earthRadiusMeters = 6378245;  
+        var metersPerDegree = 2.0 * Math.PI * earthRadiusMeters / 360.0;  
+        var radiansPerDegree = Math.PI / 180.0;  
+        var degreesPerRadian = 180.0 / Math.PI; 
+        function initcanvas(canvasnumber){
+            for(var m=0;m<canvasnumber;m++){
+                var canvas=document.createElement("canvas");
+                canvas.id="can"+m;
+                canvas.style.marginLeft=50;
+                canvas.style.marginTop=50;
+                canvas.width=1080;
+                canvas.height=640;
+                canvas.style.border="2px solid";
+                document.body.appendChild(canvas);
+                /*var oCG=canvas.getContext('2d');
+                oCG.strokeStyle="#8E8E8E";
+                oCG.lineWidth="0.5";
+                oCG.beginPath();
+                for(var i=1;i<16;i++)
+                {
+                    oCG.moveTo(30*i,0);
+                    oCG.lineTo(30*i,canvas.offsetHeight);
+                    oCG.moveTo(0,30*i);
+                    oCG.lineTo(canvas.offsetWidth,30*i);
+                    oCG.stroke();
+                }
+                oCG.closePath();*/
+            }
+        }
+        function drawyourname()
+        {
+            var test=document.getElementById("test");
+            test.innerHTML=null;
+            var file=document.getElementById("fileinput").files[0];
+            var reader=new FileReader();
+            reader.readAsText(file);
+            reader.onload = function (e) {
+                
+                var fileText = e.target.result.split("\n");
+                var m=0;
+                var endposition=new Array();
+                var startposition=new Array();
+                var changetype=document.getElementById("font");
+                startposition[0]=0;
+                for(var i=0;i<fileText.length-1;i++){
+                    if((fileText[i].trim()=="END")&&(fileText[i+1].trim()=="END")){
+                        endposition.push(i+1);
+                        startposition.push(i+2);
+                        m++;
+                    }
+                }
+                endposition.push(fileText.length);
+                if(document.getElementById("can0")){
+                    for(var i=0;i<m;i++){
+                        var canvas=document.getElementById("can"+i);
+                        canvas.remove();
+                    }
+                }
+                initcanvas(m);
+                for(var aa=0;aa<m;aa++){
+                    var canvas=document.getElementById("can"+aa);
+                    var oCG=canvas.getContext('2d');
+                    oCG.strokeStyle=document.getElementById("pencolor").value;
+                    oCG.lineWidth=document.getElementById("penwidth").value;
+                    oCG.beginPath();
+                    var linestart=new Array();
+                    var lineend=new Array();
+                    var linenum=0;
+                    linestart.push(startposition[aa]);
+                    for(var j=startposition[aa];j<endposition[aa];j++){
+                        if(fileText[j].trim()=="END"){
+                            linenum++;
+                            lineend.push(j);
+                            linestart.push(j+1);
+                        }
+                    }
+                    lineend.push(endposition[aa]);
+                    var number=1;
+                    var sum=0;
+                    for(var p=0;p<linenum;p++){
+                        var line=new Array();
+                        for(var i=linestart[p]+1;i<lineend[p];i++){
+                            var dot=fileText[i].split(",");
+                            line.push(dot);   
+                        }
+                        for(var i=0;i<line.length;i++){
+                            line[i][0]=parseFloat(line[i][0]);
+                            line[i][1]=parseFloat(line[i][1]);
+                        }
+                        var afterline;
+
+                        if(changetype.options[changetype.options.selectedIndex].value=="0"){
+                            var s=Math.abs(getArea(line));
+                            if(s>5000000){
+                                test.innerHTML+="面积"+number+":  "+s/1000000+"  square kilo meters<br>";
+                                number++;
+                                sum+=s/1000000;
+                            }
+                            afterline=showMokatuo(line);
+                        }
+
+                        if(changetype.options[changetype.options.selectedIndex].value=="1"){
+                            var afterline1=fanjie(line);
+                            afterline=afterline1;
+                            var s=Math.abs(getArea1(afterline1));
+                            if(s>5000000){
+                                test.innerHTML+="面积"+number+":  "+s/1000000+"  square kilo meters<br>";
+                                number++;
+                                sum+=s/1000000;
+                            }
+                            for(var i=0;i<afterline1.length;i++){
+                                afterline[i][0]=afterline1[i][0]*100-11400;
+                                afterline[i][1]=640-(afterline1[i][1]*100-2950);
+                            }
+                            
+                            
+                        }
+                        else{
+                            afterline=line;
+                        }
+                        oCG.moveTo(afterline[0][0],afterline[0][1]);
+                        for(var i=1;i<afterline.length;i++){
+                            oCG.lineTo(afterline[i][0],afterline[i][1]);
+                        }
+                        oCG.stroke();
+                    }
+                    test.innerHTML+="总面积"+":  "+sum+"  squaremeters<br>";
+                    oCG.closePath();
+                }
+            }
+        }
+        function showMokatuo(line){
+            for(var i=0;i<line.length;i++){
+                var x=line[i][0]/1000;
+                var y=line[i][1]/1000;
+                /*line[i][0]=xxx*1.5+540;
+                line[i][1]=(-yyy+100)*1.5+200;*/
+                line[i][0]=x-12700;
+                line[i][1]=640-(y-3550);
+            }
+            return line;
+        }
+        function getArea(line){
+            var s=0;
+            for(var i=0;i<line.length-1;i++){
+                s+=line[i][0]*line[i+1][1]-line[i+1][0]*line[i][1];
+            }
+            return s/2;
+        }
+        function fanjie(line){
+            var afterline=line;
+            var a=6378245;
+            var b=6356863.01877;
+            var e=Math.sqrt(0.006693421622966);
+            var e1=Math.sqrt(0.006738525414684);
+            var B0=0;
+            var L0=0;
+            var k=a*a/b*Math.cos(B0)/Math.sqrt(1+e1*e1*Math.cos(B0)*Math.cos(B0));
+            for(var i=0;i<line.length;i++){
+                var xn=line[i][1];
+                var ye=line[i][0];
+                var B=0;
+                var L=0;
+                L=ye/k+L0;
+                var B1=0;
+                for(var j=0;;j++){
+                    B1=Math.PI/2-2*Math.atan( Math.exp(-xn/k) * Math.exp( e/2 * Math.log( (1-Math.sin(B)) / (1+Math.sin(B)) ) ) );
+                    B=B1;
+                    if(Math.abs((B1-B))<0.000001){
+                        break;
+                    }
+                }
+                afterline[i][0]=L*180/Math.PI;
+                afterline[i][1]=B*180/Math.PI;
+            }
+            return afterline;
+        }
+        function getArea1(line){
+            var a=6378245;
+            var s=0;
+            for(var i=0;i<line.length-1;i++){
+                var x1=line[i][0]/180*Math.PI*a*Math.cos(line[i][1]/180*Math.PI);
+                var y1=line[i][1]/180*Math.PI*a;
+                var x2=line[i+1][0]/180*Math.PI*a*Math.cos(line[i+1][1]/180*Math.PI);
+                var y2=line[i+1][1]/180*Math.PI*a;
+
+                s+=x1*y2-x2*y1;
+            }
+            return s/2;
+           /* var totalAngle = 0;  
+            for (var i = 0; i < points.length; i++) {  
+                var j = (i + 1) % points.length;  
+                var k = (i + 2) % points.length;  
+                totalAngle += Angle(points[i], points[j], points[k]);  
+            }  
+            var planarTotalAngle = (points.length - 2) * 180.0;  
+            var sphericalExcess = totalAngle - planarTotalAngle;  
+            if (sphericalExcess > 420.0) {  
+                totalAngle = points.length * 360.0 - totalAngle;  
+                sphericalExcess = totalAngle - planarTotalAngle;  
+            } else if (sphericalExcess > 300.0 && sphericalExcess < 420.0) {  
+                sphericalExcess = Math.abs(360.0 - sphericalExcess);  
+            } 
+            var x=sphericalExcess * radiansPerDegree;
+            return sphericalExcess * radiansPerDegree * earthRadiusMeters * earthRadiusMeters;  */
+        }
+        /*function Angle(p1, p2, p3) {  
+            var bearing21 = Bearing(p2, p1);  
+            var bearing23 = Bearing(p2, p3);  
+            var angle = bearing21 - bearing23;  
+            if (angle < 0) {  
+                angle += 360;  
+            }  
+            return angle;  
+        }  
+  
+        function Bearing(from, to) {  
+            var lat1 = from[1] * radiansPerDegree;  
+            var lon1 = from[0] * radiansPerDegree;  
+            var lat2 = to[1] * radiansPerDegree;  
+            var lon2 = to[0] * radiansPerDegree;  
+            var angle = -Math.atan2(Math.sin(lon1 - lon2) * Math.cos(lat2), Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon1 - lon2));  
+            if (angle < 0) {  
+                angle += Math.PI * 2.0;  
+            }  
+            angle = angle * degreesPerRadian;  
+            return angle;  
+        }  */
+    </script>
+</html>
