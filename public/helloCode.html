@@ -1,0 +1,151 @@
+<html>
+    <head>
+        <title>this is my name</title>
+    </head>
+    <body>
+        <p>
+            Choose your file:<input type="file" id="fileinput" >
+            <input type="submit" id="btnconfirm" value="确认" onclick="code()">
+        </p>
+        <table id="init">
+
+        </table>
+        <p id="after">
+
+        </p>
+    </body>
+    <script>
+        var rows=0;
+        var cols=0;
+        var tree=new Array();
+        function code(){
+            var file=document.getElementById("fileinput").files[0];
+            var init=document.getElementById("init");
+            var after=document.getElementById("after");
+            var reader=new FileReader();
+            var datarow=new Array();
+            var data=new Array();
+            tree=[];
+            init.innerHTML="";
+            after.innerHTML="";
+            reader.readAsText(file);
+            reader.onload = function (e) {
+                var fileText = e.target.result.split("\n");
+                var rowcol=fileText[0].split(",");
+                rows=parseInt(rowcol[0]);
+                cols=parseInt(rowcol[1]);
+                for(var i=1;i<fileText.length;i++){
+                    datarow.push(fileText[i]);
+                }
+                for(var i=0;i<rows;i++){
+                    var tmp=datarow[i].split(",");
+                    var datarow1=new Array();
+                    for(var j=0;j<cols;j++){
+                        datarow1.push(parseInt(tmp[j]));
+                        
+                    }
+                    data.push(datarow1);
+                }
+                init.innerHTML+="矩阵为：<br>"
+                for(var i=0;i<data.length;i++){
+                    for(var j=0;j<data[i].length;j++){
+                        init.innerHTML+=data[i][j]+"\t\t\t\t";
+                    }
+                    init.innerHTML+="<br>";
+                }
+                quadtree1(data,rows,cols,0,"");
+                after.innerHTML+="该矩阵的四叉树四进制M码为：<br>"
+                for(var i=0;i<tree.length;i++){
+                    after.innerHTML+=i+1+"("+tree[i]+")<br>";
+                }
+            }
+            
+        }
+        function quadtree1(matrix,row,col,depth,motherposition){
+            if(compare(matrix)){
+                iftrue(matrix,motherposition,-1,"该矩阵所有元素都一样");
+                return;
+            }
+            else{
+                quadtree(matrix,row,col,depth,motherposition);
+            }
+        }
+        function quadtree(matrix,row,col,depth,motherposition){
+            
+            var sondata1=new Array();
+            var sondata2=new Array();
+            var sondata3=new Array();
+            var sondata4=new Array();
+            
+            for(var i=0;i<(row)/2;i++){
+                var tmp=new Array();
+                for(var j=0;j<(col)/2;j++){
+                    tmp.push(matrix[i][j]);
+                }
+                sondata1.push(tmp);
+            }
+            for(var i=0;i<(row)/2;i++){
+                var tmp=new Array();
+                for(var j=(col)/2;j<col;j++){
+                    tmp.push(matrix[i][j]);
+                }
+                sondata2.push(tmp);
+            }
+            for(var i=(row)/2;i<row;i++){
+                var tmp=new Array();
+                for(var j=0;j<(col)/2;j++){
+                    tmp.push(matrix[i][j]);
+                }
+                sondata3.push(tmp);
+            }
+            for(var i=(row)/2;i<row;i++){
+                var tmp=new Array();
+                for(var j=(col)/2;j<col;j++){
+                    tmp.push(matrix[i][j]);
+                }
+                sondata4.push(tmp);
+            }
+            if(compare(sondata1)==true){
+                iftrue(sondata1,motherposition,depth,"0");
+            }
+            else{
+                quadtree(sondata1,row/2,col/2,depth+1,motherposition+"0");
+            }
+            if(compare(sondata2)==true){
+                iftrue(sondata2,motherposition,depth,"1");
+            }
+            else{
+                quadtree(sondata2,row/2,col/2,depth+1,motherposition+"1");
+            }
+            if(compare(sondata3)==true){
+                iftrue(sondata3,motherposition,depth,"2");
+            }
+            else{
+                quadtree(sondata3,row/2,col/2,depth+1,motherposition+"2");
+            }
+            if(compare(sondata4)==true){
+                iftrue(sondata4,motherposition,depth,"3");
+            }
+            else{
+                quadtree(sondata4,row/2,col/2,depth+1,motherposition+"3");
+            }
+        }
+        function compare(data1){
+            for(var i=0;i<data1.length;i++){
+                for(var j=0;j<data1[i].length;j++){
+                    if(data1[i][j]!=data1[0][0]){
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        function iftrue(sondata,motherposition,depth,position){
+            var everytree=new Array();
+            everytree.push(motherposition+position);
+            everytree.push(depth);
+            everytree.push(sondata[0][0]);
+            tree.push(everytree);
+        }
+    </script>
+</html>
