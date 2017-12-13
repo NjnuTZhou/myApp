@@ -1,0 +1,484 @@
+<html>
+    <head>
+        <title>this is my name</title>
+    </head>
+    <body>
+        <p>
+            选择buiding文件<input type="file" id="fileinput"  multiple="true">
+        </p>
+        <p>
+            Choose pen color:<input type="text" id="pencolor" value="#000000">
+            Enter pen width:<input type="number" id="penwidth" value="1">
+        </p>
+        <select id="font">
+                <option value="0">绘制地图符号</option> 
+        </select>
+        <p>
+            <input type="button" id="drawLanbert" value="compute" onclick="draw()"/>
+        </p>
+    </body>
+    <script>
+        var p=new Array();
+        var allpoly=new Array();
+        var eachpolygon=new Array();
+        var allhu=new Array();
+        function initcanvas(){
+            var canvas=document.createElement("canvas");
+            canvas.id="can";
+            canvas.style.marginLeft=50;
+            canvas.style.marginTop=50;
+            canvas.width=1080;
+            canvas.height=640;
+            canvas.style.border="2px solid";
+            document.body.appendChild(canvas);
+        }
+        function draw(){
+            var test=document.getElementById("test");
+            var file=document.getElementById("fileinput").files[0];
+            var reader=new FileReader();
+            
+            reader.readAsText(file);
+            reader.onload = function (e) {
+                var polytype=new Array();
+                var fileText = e.target.result.split("\n");
+                var changetype=document.getElementById("map");
+                var nodenum=0;
+                var x=new Array();
+                var m=0;
+                var endposition=new Array();
+                var startposition=new Array();
+                startposition[0]=0;
+                for(var i=0;i<fileText.length-1;i++){
+                    if((fileText[i].trim()=="END")&&(fileText[i+1].trim()=="END")){
+                        endposition.push(i+1);
+                        startposition.push(i+2);
+                        m++;
+                        polytype.push(m);
+                    }
+                }
+                endposition.push(fileText.length);
+                if(document.getElementById("can")){
+                    for(var i=0;i<m;i++){
+                        var canvas=document.getElementById("can");
+                        canvas.remove();
+                    }
+                }
+                initcanvas();
+                for(var aa=0;aa<m;aa++){
+                    var canvas=document.getElementById("can");
+                    var oCG=canvas.getContext('2d');
+                    var changetype=document.getElementById("font");
+                    var linestart=new Array();
+                    var lineend=new Array();
+                    var linenum=0;
+                    linestart.push(startposition[aa]);
+                    for(var j=startposition[aa];j<endposition[aa];j++){
+                        if(fileText[j].trim()=="END"){
+                            linenum++;
+                            lineend.push(j);
+                            linestart.push(j+1);
+                        }
+                    }
+                    lineend.push(endposition[aa]);
+                    for(var p=0;p<linenum;p++){
+                        var line=new Array();
+                        for(var i=linestart[p]+1;i<lineend[p];i++){
+                            var dot=fileText[i].split(",");
+                            line.push(dot);   
+                        }
+                    }
+                    var afterline;
+                    for(var p=0;p<linenum;p++){
+                        var line=new Array();
+                        for(var i=linestart[p]+1;i<lineend[p];i++){
+                            var dot=fileText[i].split(",");
+                            line.push(dot);   
+                        }
+                        for(var i=0;i<line.length;i++){
+                            line[i][0]=(parseFloat(line[i][0])-430000)*3+150;
+                            line[i][1]=(640-(parseFloat(line[i][1])-3260000))*3-50;
+                        }
+                        if(changetype.options[changetype.options.selectedIndex].value=="0"){
+                            afterline=line;
+                        }
+                        if(polytype[aa]==2){
+                            oCG.strokeStyle='#90EE90';
+                            oCG.lineWidth=0.3;
+                        }
+                        else{
+                            oCG.strokeStyle='#000000';
+                            oCG.lineWidth=0.3;
+                        }
+                        oCG.beginPath();
+                        oCG.moveTo(afterline[0][0],afterline[0][1]);
+                        for(var i=1;i<afterline.length;i++){
+                            oCG.lineTo(afterline[i][0],afterline[i][1]);
+                        }
+                        oCG.stroke();
+                        oCG.closePath();
+                        drawSymbol(afterline,polytype[aa]);
+                    }
+                }
+                
+            }
+            
+        }
+        function drawSymbol(line,polytype){
+            if(polytype==1){
+                symbolbuilding(line);
+            }
+            else{
+                symbolvergen(line);
+            }
+        }
+        /*function symbolvergen(line){
+            var canvas=document.getElementById('can');
+            var oCG=canvas.getContext('2d');
+            
+            oCG.lineWidth=5;
+
+            var miny=line[0][1];
+            var maxy=line[0][1];
+            for(var i=0;i<line.length;i++){
+                if(miny>line[i][1]){
+                    miny=line[i][1];
+                }
+                if(maxy<line[i][1]){
+                    maxy=line[i][1];
+                }
+            }
+
+            var starty=miny+3;
+            var flag=0;
+            while(starty<maxy-3){
+                var xborder=new Array();
+                //计算扫描线与多边形的两个交点
+                for(var j=0;j<line.length-1;j++){
+                    var x2=line[j][0];
+                    var y2=line[j][1];
+                    var x3=line[j+1][0];
+                    var y3=line[j+1][1];
+
+                    var newx;
+                    if(x3!=x2){
+                        if(y2!=y3){
+                            var k2=(y3-y2)/(x3-x2);
+                            var b2=(x3*y2-x2*y3)/(x3-x2);
+                            newx=(starty-b2)/k2;
+                            newy=starty;
+                        }
+                        else{
+                            continue;
+                        }
+                    }
+                    else{
+                        newx=x2;
+                        newy=starty;
+                    }
+                    if((newx<=x2&&newx>=x3)||(newx>=x2&&newx<=x3)){
+                        if((newy<=y2&&newy>=y3)||(newy>=y2&&newy<=y3)){
+                            xborder.push(newx);
+                        }
+                    }
+                }
+                if(Math.abs(xborder[0]-xborder[1])<6){
+                    starty+=6;
+                    flag+=1;
+                    continue;
+                }
+                else{
+                    var minx,maxx;
+                    if(xborder[0]>xborder[1]){
+                        maxx=xborder[0];
+                        minx=xborder[1];
+                    }
+                    else{
+                        maxx=xborder[1];
+                        minx=xborder[0];
+                    }
+
+                    var startx=minx+3;
+                    if(flag%2==0){
+                        oCG.strokeStyle='#90EE90';
+                    }
+                    else{
+                        oCG.strokeStyle='000000';
+                    }
+                    while(startx<maxx-3){
+                        oCG.beginPath();
+                        oCG.fillRect(startx,starty,1,1);
+                        oCG.stroke();
+                        oCG.closePath();
+                        startx+=6;
+                    }
+                }
+                var starty=
+                starty+=6;
+                flag+=1;
+            }
+        }*/
+        function symbolvergen(line){
+            var canvas=document.getElementById('can');
+            var oCG=canvas.getContext('2d');
+            oCG.lineWidth=1;
+
+            var minx=line[0][0];
+            var miny=line[0][1];
+            var maxx=line[0][0];
+            var maxy=line[0][1];
+            for(var i=0;i<line.length;i++){
+                if(minx>line[i][0]){
+                    minx=line[i][0];
+                }
+                if(miny>line[i][1]){
+                    miny=line[i][1];
+                }
+                if(maxx<line[i][0]){
+                    maxx=line[i][0];
+                }
+                if(maxy<line[i][1]){
+                    maxy=line[i][1];
+                }
+            }
+            var startx=minx;
+            var starty=miny;
+            var flag=0;
+            //斜率定为0.7
+            while(startx<maxx+(maxy-miny)){
+                var x=new Array();
+                var y=new Array();
+                var b1=starty+startx;
+                var k1=-1;
+                for(var j=0;j<line.length-1;j++){
+                    var x2=line[j][0];
+                    var y2=line[j][1];
+                    var x3=line[j+1][0];
+                    var y3=line[j+1][1];
+                    var newx;
+                    var newy;
+                    
+                    if(x3!=x2){
+                        var k2=(y3-y2)/(x3-x2);
+                        var b2=(x3*y2-x2*y3)/(x3-x2);
+                        if(k1!=k2){
+                            newx=(b2-b1)/(k1-k2);
+                            newy=k1*newx+b1;
+                        }
+                    }
+                    else{
+                        newx=x2;
+                        newy=k1*newx+b1;
+                    }
+                    if((newx<=x2&&newx>=x3)||(newx>=x2&&newx<=x3)){
+                        if((newy<=y2&&newy>=y3)||(newy>=y2&&newy<=y3)){
+                            x.push(newx);
+                            y.push(newy);
+                        }
+                    }
+                }
+                
+                if(x.length>0){
+
+                    for(var j=0;j<x.length;j++){
+                        for(var ttt=j;ttt<x.length;ttt++){
+                            if(x[j]>x[ttt]){
+                                var temp=x[j];
+                                x[j]=x[ttt];
+                                x[ttt]=temp;
+                            }
+                        }
+                    }
+                    for(var j=0;j<x.length;j=j+2){
+                        var minx1=x[j];
+                        var maxx1=x[j+1];
+                        var dotx=minx1+3;
+                        while(dotx<maxx1-3){
+                            doty=k1*dotx+b1;
+                            if(flag%2==0){
+                            
+                                oCG.fillStyle='#000000';
+                                oCG.strokeStyle='#90EE90';
+                                oCG.beginPath();
+
+                                oCG.fillRect(dotx,doty,1,1);
+                                oCG.moveTo(dotx,doty);
+                                oCG.lineTo(dotx-2,doty-2);
+                                oCG.moveTo(dotx,doty);
+                                oCG.lineTo(dotx+2,doty-2);
+                                oCG.stroke();
+                                oCG.closePath();
+                            }
+                            else{
+                                oCG.fillStyle='#DC143C';
+                                oCG.strokeStyle='#90EE90';
+                                oCG.beginPath();
+
+                                oCG.fillRect(dotx,doty,1,1);
+                                oCG.moveTo(dotx,doty);
+                                oCG.lineTo(dotx-2,doty-2);
+                                oCG.moveTo(dotx,doty);
+                                oCG.lineTo(dotx+2,doty-2);
+                                oCG.stroke();
+                                oCG.closePath();
+                            }
+                            dotx+=6;
+                            flag+=1;
+                        }
+                    }
+                }
+                /*if(x.length>2){
+                    for(var j=0;j<x.length;j++){
+                        oCG.beginPath();
+                        oCG.moveTo(x[j],y[j]);
+                        oCG.lineTo(x[x.length-1-j],y[x.length-1-j]);
+                        oCG.stroke();
+                        oCG.closePath();
+                    }
+                }*/
+                startx+=10;
+            }
+        }
+        function symbolbuilding(line){
+            var canvas=document.getElementById('can');
+            var oCG=canvas.getContext('2d');
+            oCG.lineWidth=1;
+            oCG.strokeStyle='#000000';
+            var minx=line[0][0];
+            var miny=line[0][1];
+            var maxx=line[0][0];
+            var maxy=line[0][1];
+            for(var i=0;i<line.length;i++){
+                if(minx>line[i][0]){
+                    minx=line[i][0];
+                }
+                if(miny>line[i][1]){
+                    miny=line[i][1];
+                }
+                if(maxx<line[i][0]){
+                    maxx=line[i][0];
+                }
+                if(maxy<line[i][1]){
+                    maxy=line[i][1];
+                }
+            }
+            /*oCG.moveTo(minx,miny);
+            oCG.lineTo(maxx,miny);
+            oCG.lineTo(maxx,maxy);
+            oCG.moveTo(minx,miny);
+            oCG.lineTo(minx,maxy);
+            oCG.lineTo(maxx,maxy);
+            oCG.stroke();*/
+            var startx=minx;
+            var starty=miny;
+            
+            //斜率定为0.7
+            while(startx<maxx+(maxy-miny)){
+                var x=new Array();
+                var y=new Array();
+                var b1=starty+startx;
+                var k1=-1;
+                for(var j=0;j<line.length-1;j++){
+                    var x2=line[j][0];
+                    var y2=line[j][1];
+                    var x3=line[j+1][0];
+                    var y3=line[j+1][1];
+                    var newx;
+                    var newy;
+                    
+                    if(x3!=x2){
+                        var k2=(y3-y2)/(x3-x2);
+                        var b2=(x3*y2-x2*y3)/(x3-x2);
+                        if(k1!=k2){
+                            newx=(b2-b1)/(k1-k2);
+                            newy=k1*newx+b1;
+                        }
+                    }
+                    else{
+                        newx=x2;
+                        newy=k1*newx+b1;
+                    }
+                    if((newx<=x2&&newx>=x3)||(newx>=x2&&newx<=x3)){
+                        if((newy<=y2&&newy>=y3)||(newy>=y2&&newy<=y3)){
+                            x.push(newx);
+                            y.push(newy);
+                        }
+                    }
+                }
+                
+                for(var j=0;j<x.length;j++){
+                    for(var ttt=j;ttt<x.length;ttt++){
+                        if(x[j]>x[ttt]){
+                            var temp=x[j];
+                            x[j]=x[ttt];
+                            x[ttt]=temp;
+                            var temp1=y[j];
+                            y[j]=y[ttt];
+                            y[ttt]=temp1;
+                        }
+                    }
+                }
+                for(var j=0;j<x.length;j+=j+2){
+                    oCG.beginPath();
+                    oCG.moveTo(x[j],y[j]);
+                    oCG.lineTo(x[j+1],y[j+1]);
+                    oCG.stroke();
+                    oCG.closePath();
+                }
+                startx+=10;
+            }
+            /*
+            var xiex=new Array();
+            var xiey=new Array();
+            for(var i=0;i<160;i++){
+                xiex.push((i+1)*13.5);
+                xiey.push((i+1)*8);
+            }
+            for(var i=0;i<160;i++){
+                var x=new Array();
+                var y=new Array();
+
+                var x0=xiex[i];
+                var y0=0;
+                var x1=0;
+                var y1=xiey[i];
+                var k1=(y1-y0)/(x1-x0);
+                var b1=(x1*y0-x0*y1)/(x1-x0);
+
+                for(var j=0;j<line.length-1;j++){
+                    var x2=line[j][0];
+                    var y2=line[j][1];
+                    var x3=line[j+1][0];
+                    var y3=line[j+1][1];
+                    var newx;
+                    var newy;
+                    
+                    if(x3!=x2){
+                        var k2=(y3-y2)/(x3-x2);
+                        var b2=(x3*y2-x2*y3)/(x3-x2);
+                        if(k1!=k2){
+                            newx=(b2-b1)/(k1-k2);
+                            newy=k1*newx+b1;
+                        }
+                    }
+                    else{
+                        newx=x2;
+                        newy=k1*newx+b1;
+                    }
+                    if((newx<=x2&&newx>=x3)||(newx>=x2&&newx<=x3)){
+                        if((newy<=y2&&newy>=y3)||(newy>=y2&&newy<=y3)){
+                            x.push(newx);
+                            y.push(newy);
+                        }
+                    }
+                }
+                for(var j=0;j<x.length;j++){
+                    oCG.beginPath();
+                    oCG.moveTo(x[j],y[j]);
+                    oCG.lineTo(x[x.length-1-j],y[x.length-1-j]);
+                    oCG.stroke();
+                    oCG.closePath();
+                }
+            }*/
+        }
+    </script>
+</html>
