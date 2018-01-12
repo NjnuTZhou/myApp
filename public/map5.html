@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+	<meta charset='utf-8' />
+	<title>投影变形</title>
+	<link href="stylesheets/ol.css" rel="stylesheet" type="text/css" />
+	<script type='text/javascript' src='javascripts/ol-debug.js'></script>
+	<script src="https://cdn.bootcss.com/jquery/2.1.1/jquery.min.js"></script>
+	<link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+			font-size: 14px;
+		}
+
+		#box {
+			position: absolute;
+			background: rgba(255, 255, 255, 0.8);
+			border-radius: 5px;
+			left: 60px;
+			top: 10px;
+			height: 270px;
+			width: 220px;
+			z-index: 100;
+			padding: 15px 10px 10px 10px;
+		}
+
+		#set {
+			position: absolute;
+			top: 280px;
+			height: 23px;
+			width: 60px;
+			background: rgba(255, 255, 255, 0.8);
+			left: 140px;
+			z-index: 10;
+			border-bottom-left-radius: 5px;
+			border-bottom-right-radius: 5px;
+			text-align: center;
+		}
+
+		#set:hover {
+			background: rgba(155, 155, 155, 0.5);
+		}
+
+		.btn2 {
+			width: 50px;
+			margin-left: 10px;
+		}
+
+		.ol-attribution {
+			bottom: 10px;
+			position: fixed;
+		}
+
+		.ol-full-screen {
+			top: 10px;
+			position: fixed;
+		}
+
+		.ol-scale-line {
+			left: 50px;
+			bottom: 10px;
+			position: fixed;
+		}
+
+		.ol-overviewmap {
+			bottom: 10px;
+			position: fixed;
+		}
+		/*多级下拉菜单*/
+
+		.dropdown-submenu {
+			position: relative;
+		}
+
+		.dropdown-submenu>.dropdown-menu {
+			top: 0;
+			left: 100%;
+			margin-top: -6px;
+			margin-left: -1px;
+			-webkit-border-radius: 0 6px 6px 6px;
+			-moz-border-radius: 0 6px 6px;
+			border-radius: 0 6px 6px 6px;
+		}
+
+		.dropdown-submenu:hover>.dropdown-menu {
+			display: block;
+		}
+
+		.dropdown-submenu>a:after {
+			display: block;
+			content: " ";
+			float: right;
+			width: 0;
+			height: 0;
+			border-color: transparent;
+			border-style: solid;
+			border-width: 5px 0 5px 5px;
+			border-left-color: #ccc;
+			margin-top: 5px;
+			margin-right: -10px;
+		}
+
+		.dropdown-submenu:hover>a:after {
+			border-left-color: #fff;
+		}
+
+		.dropdown-submenu.pull-left {
+			float: none;
+		}
+
+		.dropdown-submenu.pull-left>.dropdown-menu {
+			left: -100%;
+			margin-left: 10px;
+			-webkit-border-radius: 6px 0 6px 6px;
+			-moz-border-radius: 6px 0 6px 6px;
+			border-radius: 6px 0 6px 6px;
+		}
+
+		.search {
+			float: left;
+		}
+
+		.btn-group {
+			float: left;
+		}
+
+		.test {
+			z-index: 20;
+			margin-left: -1px;
+		}
+
+		#status b,
+		#countryname b {
+			color: red;
+		}
+	</style>
+</head>
+
+<body style="margin: 0">
+	<div id="box">
+		<b>Map：</b>
+		<button class="btn2" onclick="moveForbid()">fix</button> <button class="btn2" onclick="moveAllowed()">roam</button>
+		<br>
+		<br>
+		<b style="float:left">Status:</b>
+		<div id="status" style="float: left;margin-left: 10px">move <b>on</b> & drag <b>off</b></div>
+		<br>
+		<br>
+		<b style="float:left">Poisition：</b>
+		<div id="mouse-position" style="float: left;margin-left: 2px"></div>
+		<br>
+		<br>
+		<b style="float: left">Country：</b>
+		<div id="countryname" style="float: left;margin-left: 6px"><b>None</b></div>
+		<br>
+		<br>
+		<b style="float: left">Projection：Mercator</b>
+		<br>
+		<br>
+
+		<b style="float: left;margin-top: 6px">Select Country： </b>
+		<div class="test">
+			<div class="btn-group">
+				<div class="dropdown">
+					<a id="dLabel" role="button" data-toggle="dropdown" class="btn btn-primary" data-target="#" href="javascript:;">  
+					country
+					<span class="caret"></span>  
+					</a>
+					<ul class="dropdown-menu multi-level" role="menu" aria-labelledby="dropdownMenu">
+						<li class="dropdown-submenu" name="Europe">
+							<a tabindex="-1" href="javascript:;">Europe</a>
+							<ul class="dropdown-menu">
+								<li><a tabindex="-1" href="javascript:;" name="United Kingdom">United Kingdom</a></li>
+								<li><a tabindex="-1" href="javascript:;" name="France">France</a></li>
+								<li><a tabindex="-1" href="javascript:;" name="Russia">Russia</a></li>
+								<li><a tabindex="-1" href="javascript:;" name="Spain">Spain</a></li>
+								<li><a tabindex="-1" href="javascript:;" name="Germany">Germany</a></li>
+							</ul>
+						</li>
+						<li class="dropdown-submenu" name="Asia">
+							<a tabindex="-1" href="javascript:;">Asia</a>
+							<ul class="dropdown-menu">
+								<li><a tabindex="-1" href="javascript:;" name="China">China</a></li>
+								<li><a tabindex="-1" href="javascript:;" name="India">India</a></li>
+								<li><a tabindex="-1" href="javascript:;" name="Japan">Japan</a></li>
+								<li><a tabindex="-1" href="javascript:;" name="Indonesia">Indonesia</a></li>
+							</ul>
+						</li>
+						<li class="dropdown-submenu" name="North America">
+							<a tabindex="-1" href="javascript:;">North America</a>
+							<ul class="dropdown-menu">
+								<li><a tabindex="-1" href="javascript:;" name="Canada">Canada</a></li>
+								<li><a tabindex="-1" href="javascript:;" name="United States">United States</a></li>
+								<li><a tabindex="-1" href="javascript:;" name="Mexico">Mexico</a></li>
+							</ul>
+						</li>
+						<li class="dropdown-submenu" name="South America">
+							<a tabindex="-1" href="javascript:;">South America</a>
+							<ul class="dropdown-menu">
+								<li><a tabindex="-1" href="javascript:;" name="Brazil">Brazil</a></li>
+								<li><a tabindex="-1" href="javascript:;" name="Argentina">Argentina</a></li>
+							</ul>
+						</li>
+						<li class="dropdown-submenu" name="Africa">
+							<a tabindex="-1" href="javascript:;">Africa</a>
+							<ul class="dropdown-menu">
+								<li><a tabindex="-1" href="javascript:;" name="South Africa">South Africa</a></li>
+								<li><a tabindex="-1" href="javascript:;" name="Egypt">Egypt</a></li>
+							</ul>
+						</li>
+						<li class="dropdown-submenu" name="Oceania">
+							<a tabindex="-1" href="javascript:;">Oceania</a>
+							<ul class="dropdown-menu">
+								<li><a tabindex="-1" href="javascript:;" name="Australia">Australia</a></li>
+								<li><a tabindex="-1" href="javascript:;" name="New Zealand">New Zealand</a></li>
+							</ul>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<br>
+
+
+	</div>
+	<div id="set">
+		<b style="font-size: 13px;">Set</b>
+	</div>
+	<div id="map" style="width: 100%; height:800px"></div>
+	<script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script type='text/javascript'>
+		var selectedcoutry = null;
+		var selectN = null;
+		$(document).ready(function () {
+			$(".multi-level li ul li a").click(function () {
+				selectedcoutry = $(this).attr("name");
+				for (var i = 0; i < position.length; i++) {
+					if (position[i].name == selectedcoutry) {
+						var evt = [];
+						var pos = (position[i].pos).split(',');
+						evt[0] = parseFloat(pos[0]);
+						evt[1] = parseFloat(pos[1]);
+						selectN = i;
+						getCountry(evt);
+						break;
+					}
+				}
+			});
+		});
+
+		var position = [
+			{
+				name: "United Kingdom",
+				pos: "-234814.55089206249,6927029.2513158135"
+			},
+			{
+				name: "France",
+				pos: "254382.4301330652,5635549.221409475"
+			},
+			{
+				name: "Russia",
+				pos: "9529557.190369494,7690176.541715013"
+			},
+			{
+				name: "Spain",
+				pos: "-508764.8602661323,4931105.56873329"
+			},
+			{
+				name: "Germany",
+				pos: "1164288.8148398055,6594375.304218725"
+			},
+			{
+				name: "China",
+				pos: "12601714.231207298,3678761.297308963"
+			},
+			{
+				name: "India",
+				pos: "8844681.416934315,2485120.6636076504"
+			},
+			{
+				name: "Japan",
+				pos: "15478192.47963505,4441908.587708163"
+			},
+			{
+				name: "Indonesia",
+				pos: "11388505.71826498,-273950.30937407166"
+			},
+			{
+				name: "Canada",
+				pos: "28803918.242759544,8003262.609571096"
+			},
+			{
+				name: "United States",
+				pos: "27982067.31463733,4207094.0368161015"
+			},
+			{
+				name: "Mexico",
+				pos: "29077868.552133616,2524256.4220896605"
+			},
+			{
+				name: "Brazil",
+				pos: "33695888.05301082,-1428455.184593372"
+			},
+			{
+				name: "Argentina",
+				pos: "32952308.64185263,-3737464.9350319766"
+			},
+			{
+				name: "South Africa",
+				pos: "2426417.0258846413,-3659193.418067958"
+			},
+			{
+				name: "Egypt",
+				pos: "3326539.4709708784,2837342.4899457432"
+			},
+			{
+				name: "Australia",
+				pos: "14284551.845933747,-3189564.3162838332"
+			},
+			{
+				name: "New Zealand",
+				pos: "18824299.829846933,-5733388.6176145"
+			}
+		];
+
+
+		var proType = 'EPSG:3857';
+		var layers = 'mapprojection:map-projection';
+		var querylayers = 'mapprojection:country';
+
+		$("#set").click(function () {
+			var s = document.getElementById('box').offsetTop;
+			if (s == 10) {
+				$("#box").animate({ top: '-280px' });
+				$("#set").animate({ top: '0px' });
+			}
+			else {
+				$("#box").animate({ top: '10px' });
+				$("#set").animate({ top: '280px' });
+			}
+		});
+
+		var view = new ol.View({
+			projection: proType,
+			center: [0, 0],
+			zoom: 2,
+			minZoom: 1,
+			maxZoom: 6
+		});
+
+
+
+		var layer = getlayer();
+		var map = getmap();
+
+		function getlayer() {
+			var layer = new ol.layer.Tile({
+				source: new ol.source.TileWMS({
+					url: "http://123.206.179.214:8080/geoserver/mapprojection/wms",
+					preload: Infinity,
+					params: {
+						'service': 'WMS',
+						'version': '1.1.0',
+						'request': 'GetMap',
+						'layers': layers,
+						'srs': proType,
+					},
+					serverType: 'geoserver',
+				})
+			});
+			return layer;
+		}
+		function getmap() {
+			var map = new ol.Map({
+				target: 'map',
+				controls: ol.control.defaults().extend([
+					//全屏显示
+					new ol.control.FullScreen(),
+					//鹰眼
+					new ol.control.OverviewMap({}),
+					//比例尺
+					new ol.control.ScaleLine({}),
+					//放大缩小级别滚轮
+					new ol.control.ZoomSlider({})
+				]),
+				layers: [
+					layer
+				],
+				view: view
+			});
+			return map;
+		}
+
+
+		var mousePositionControl = new ol.control.MousePosition({
+			coordinateFormat: ol.coordinate.createStringXY(4),
+			projection: "EPSG:4326",
+			className: "custom-mouse-position",
+			target: document.getElementById("mouse-position"),
+			undefinedHTML: ""
+		})
+
+		map.addControl(mousePositionControl);
+		function getCountry(pos) {
+			var view = map.getView();
+			var viewResolution = view.getResolution();
+			var source = layer.getSource();
+			var url = source.getGetFeatureInfoUrl(
+				pos, viewResolution, view.getProjection(),
+				{ 'INFO_FORMAT': 'text/javascript' });
+
+			$.ajax({
+				url: url,
+				data: {
+					version: '1.0.0',
+					request: 'GetFeatureInfo',
+					layers: layers,
+					styles: '',
+					SRS: proType,
+					info_format: 'text/javascript',
+					query_layers: querylayers
+				},
+				method: 'GET',
+				dataType: 'jsonp',
+				jsonp: 'callback',
+				jsonpCallback: 'parseResponse',
+				dataFilter: function (data, type) {
+					return data;
+				},
+				success: function (json, textStatus) {
+					//alldata表示国家的数据结构
+					alldata = json.features[0];
+					var name = alldata.properties.NAME;
+					var iii = mousePositionControl.renderedHTML_;
+					if (iii == "") {
+						var newpos = position[selectN].pos.split(',');
+						newpos[0] = parseFloat(newpos[0]);
+						newpos[1] = parseFloat(newpos[1]);
+						var temp = ol.proj.transform(newpos, proType, 'EPSG:4326');
+						iii = temp[0] + "," + temp[1];
+					}
+					//var temp=alldata.geometry.coordinates[0][0][0];
+					document.getElementById('countryname').innerHTML = "<b>" + name + "</b>";
+
+					//evt.coordinateFormat=ol.coordinate.createStringXY(4);
+					var mPosition = iii.split(',');
+					for (var i = 0; i < mPosition.length; i++) {
+						mPosition[i] = parseFloat(mPosition[i]);
+					}
+
+					//深拷贝json
+					originposition.crs = json.crs;
+					originposition.totalFeatures = json.totalFeatures;
+					originposition.type = json.type;
+					var t = {
+						geometry_name: json.features[0].geometry_name,
+						id: json.features[0].id,
+						properties: json.features[0].properties,
+						type: json.features[0].type,
+						geometry: {
+							type: json.features[0].geometry.type,
+							coordinates: []
+						}
+					};
+					originposition.features = [t];
+					for (var i = 0; i < json.features[0].geometry.coordinates.length; i++) {
+						var temp = [];
+						for (var j = 0; j < json.features[0].geometry.coordinates[i].length; j++) {
+							temp.push(json.features[0].geometry.coordinates[i][j].slice());
+						}
+						originposition.features[0].geometry.coordinates.push(temp);
+					}
+					drawCountry(json);
+					touying(json, mPosition);
+
+				},
+				error: function (XMLHttpRequest, textStatus, errorThrown) {
+					console.log("jsonp.error:" + textStatus);
+				}
+
+			});
+		}
+
+		map.on('singleclick', function (evt) {
+			getCountry(evt.coordinate);
+		});
+
+		var originposition = {};
+
+		function touying(json, mPosition) {
+			var jingweidu = json;
+			var coor = json.features[0].geometry.coordinates;
+
+			for (var i = 0; i < coor.length; i++) {
+				for (var j = 0; j < coor[i][0].length; j++) {
+					jingweidu.features[0].geometry.coordinates[i][0][j] = ol.proj.transform(coor[i][0][j], proType, 'EPSG:4326');
+				}
+			}
+			var jjj = jingweidu.features[0].geometry.coordinates;
+			var zuobiaocha = new Array();
+			for (var i = 0; i < coor.length; i++) {
+				var tmp = new Array();
+				for (var j = 0; j < coor[i][0].length; j++) {
+					var x = jjj[i][0][j][0];
+					var y = jjj[i][0][j][1];
+					var chax = x - mPosition[0];
+					var chay = y - mPosition[1];
+					tmp.push(new Array(chax, chay));
+				}
+				zuobiaocha.push(tmp);
+			}
+			map.on('pointerdrag', function (event) {
+				var mouse = mousePositionControl.renderedHTML_.split(',');
+				for (var i = 0; i < mouse.length; i++) {
+					mouse[i] = parseFloat(mouse[i]);
+				}
+				var newcoor = json;
+				for (var i = 0; i < coor.length; i++) {
+					for (var j = 0; j < coor[i][0].length; j++) {
+						newcoor.features[0].geometry.coordinates[i][0][j][0] = zuobiaocha[i][j][0] + mouse[0];
+						newcoor.features[0].geometry.coordinates[i][0][j][1] = zuobiaocha[i][j][1] + mouse[1];
+						newcoor.features[0].geometry.coordinates[i][0][j] = ol.proj.transform(coor[i][0][j], 'EPSG:4326', proType);
+					}
+				}
+				drawCountry(newcoor);
+			});
+
+			$('#map').mouseup(function () {
+				var alllayer = map.getLayers().array_;
+				for (var i = 1; i < alllayer.length; i++) {
+					map.removeLayer(alllayer[i]);
+				}
+				drawCountry(originposition);
+			});
+		}
+		function getCountry1(pos) {
+			var view = map.getView();
+			var viewResolution = view.getResolution();
+			var source = layer.getSource();
+			var url = source.getGetFeatureInfoUrl(
+				pos, viewResolution, view.getProjection(),
+				{ 'INFO_FORMAT': 'text/javascript' });
+
+			$.ajax({
+				url: url,
+				data: {
+					version: '1.0.0',
+					request: 'GetFeatureInfo',
+					layers: layers,
+					styles: '',
+					SRS: proType,
+					info_format: 'text/javascript',
+					query_layers: querylayers
+				},
+				method: 'GET',
+				dataType: 'jsonp',
+				jsonp: 'callback',
+				jsonpCallback: 'parseResponse',
+				dataFilter: function (data, type) {
+					return data;
+				},
+				success: function (json, textStatus) {
+					//alldata表示国家的数据结构
+					alldata = json.features[0];
+					var name = alldata.properties.NAME;
+					var iii = mousePositionControl.renderedHTML_;
+					//var temp=alldata.geometry.coordinates[0][0][0];
+					document.getElementById('countryname').innerText = name;
+
+					//evt.coordinateFormat=ol.coordinate.createStringXY(4);
+					var mPosition = iii.split(',');
+					for (var i = 0; i < mPosition.length; i++) {
+						mPosition[i] = parseFloat(mPosition[i]);
+					}
+
+					//深拷贝json
+					originposition.crs = json.crs;
+					originposition.totalFeatures = json.totalFeatures;
+					originposition.type = json.type;
+					var t = {
+						geometry_name: json.features[0].geometry_name,
+						id: json.features[0].id,
+						properties: json.features[0].properties,
+						type: json.features[0].type,
+						geometry: {
+							type: json.features[0].geometry.type,
+							coordinates: []
+						}
+					};
+					originposition.features = [t];
+					for (var i = 0; i < json.features[0].geometry.coordinates.length; i++) {
+						var temp = [];
+						for (var j = 0; j < json.features[0].geometry.coordinates[i].length; j++) {
+							temp.push(json.features[0].geometry.coordinates[i][j].slice());
+						}
+						originposition.features[0].geometry.coordinates.push(temp);
+					}
+					drawCountry(json);
+
+				},
+				error: function (XMLHttpRequest, textStatus, errorThrown) {
+					console.log("jsonp.error:" + textStatus);
+				}
+
+			});
+		}
+		function drawCountry(data) {
+			var vectorsource = new ol.source.Vector({
+				format: new ol.format.GeoJSON(),
+				projection: proType,
+				features: (new ol.format.GeoJSON()).readFeatures(data)
+			});
+			var fillstyle = new ol.style.Fill({
+				color: '#ff0000'
+			})
+			var strokestyle = new ol.style.Stroke({
+				color: '#4D4D4D',
+				width: 1
+			})
+			var vectorlayer = new ol.layer.Vector({
+				source: vectorsource,
+				style: new ol.style.Style({
+					fill: fillstyle,
+					stroke: strokestyle
+				}),
+				opacity: 0.6
+			})
+			var alllayer = map.getLayers().array_;
+			if (alllayer.length > 1) {
+				map.removeLayer(alllayer[1]);
+			}
+			map.addLayer(vectorlayer);
+		}
+		function moveForbid() {
+			document.getElementById('status').innerHTML = "move <b>off</b> & drag <b>on</b>";
+			for (var i = 0; i < map.getInteractions().array_.length; i++) {
+				map.getInteractions().array_[i].setActive(false);
+			}
+
+		}
+		function moveAllowed() {
+			document.getElementById('status').innerHTML = "move <b>on</b> & drag <b>off</b>";
+			for (var i = 0; i < map.getInteractions().array_.length; i++) {
+				map.getInteractions().array_[i].setActive(true);
+			}
+		}
+
+		function selectCountry() {
+			var obj_ctr = document.getElementById("country");
+			var a = obj_ctr.options[obj_ctr.options.selectedIndex].text;
+			for (var i = 0; i < countryPos.length; i++) {
+				if (a == countryPos[i][0]) {
+					var ppp = new Array(countryPos[i][1], countryPos[i][2]);
+					var aaa = ol.proj.transform(ppp, 'EPSG:4326', proType);
+					getCountry(aaa);
+				}
+			}
+		}
+	</script>
+
+
+</body>
+
+</html>
